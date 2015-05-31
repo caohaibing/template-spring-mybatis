@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.quxionglie.tsm.mapper.SysParamMapper">
+
+	<resultMap id="SysParam" type="com.quxionglie.tsm.model.SysParam">
+        <result property="id" column="id"/>
+        <result property="paramKey" column="param_key"/>
+        <result property="paramValue" column="param_value"/>
+        <result property="remark" column="remark"/>
+	</resultMap>
+	
+	<sql id="SysParamColumns">
+	    <![CDATA[
+		    `id`,
+		    `param_key`,
+		    `param_value`,
+		    `remark`
+	    ]]>
+	</sql>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    <![CDATA[
+        INSERT INTO sys_param (
+        	`id` ,
+        	`param_key` ,
+        	`param_value` ,
+        	`remark` 
+        ) VALUES (
+            #{id} ,
+            #{paramKey} ,
+            #{paramValue} ,
+            #{remark} 
+        )
+    ]]>
+	</insert>
+    
+	<update id="update" >
+        UPDATE sys_param
+        <set>
+        <if test="paramKey != null">
+            `param_key` = #{paramKey} ,
+        </if>
+        <if test="paramValue != null">
+            `param_value` = #{paramValue} ,
+        </if>
+        <if test="remark != null">
+            `remark` = #{remark} 
+        </if>
+        </set>
+        WHERE
+	        `id` = #{id} 
+	</update>
+
+    <delete id="deleteByPk">
+    <![CDATA[
+        DELETE FROM sys_param WHERE
+        `id` = #{id} 
+    ]]>
+    </delete>
+    
+    <select id="getByPk" resultMap="SysParam">
+		SELECT <include refid="SysParamColumns" />
+	    <![CDATA[
+		    FROM sys_param 
+	        WHERE 
+		        `id` = #{id} 
+	    ]]>
+	</select>
+	
+	<sql id="findPageWhere">
+		<where>
+	       <if test="params.containsKey('id')">
+				AND `id` = #{params.id}
+			</if>
+	       <if test="params.containsKey('paramKey')">
+				AND `param_key` = #{params.paramKey}
+			</if>
+	       <if test="params.containsKey('paramValue')">
+				AND `param_value` = #{params.paramValue}
+			</if>
+	       <if test="params.containsKey('remark')">
+				AND `remark` = #{params.remark}
+			</if>
+		</where>
+	</sql>
+		
+    <select id="findPageCount" resultType="int">
+        SELECT count(*) FROM sys_param 
+		<include refid="findPageWhere"/>
+    </select>
+    
+    <select id="findPage" resultMap="SysParam">
+    	SELECT <include refid="SysParamColumns" />
+	    FROM sys_param 
+		<include refid="findPageWhere"/>
+		
+		<if test="orderBy != null">
+			ORDER BY ${orderBy}
+		</if>
+        LIMIT #{pageModel.start}, #{pageModel.pageSize}
+    </select>
+
+    <select id="getByParamKey" resultMap="SysParam" parameterType="java.lang.String">
+	    SELECT <include refid="SysParamColumns"/>
+	    <![CDATA[
+	        FROM sys_param WHERE `param_key` = #{paramKey}
+	    ]]>
+    </select>
+    
+	
+</mapper>
+

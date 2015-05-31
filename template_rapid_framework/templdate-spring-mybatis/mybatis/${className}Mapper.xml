@@ -1,0 +1,129 @@
+<#include "/macro.include"/>
+<#assign className = table.className>   
+<#assign classNameFirstLower = table.classNameFirstLower>
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<#macro mapperEl value>${r"#{"}${value}}</#macro>
+<#macro namespace>${className}.</#macro>
+
+<mapper namespace="${basepackage}.mapper.${className}Mapper">
+
+	<resultMap id="${className}" type="${basepackage}.model.${className}">
+        <#list table.columns as column>
+        <result property="${column.columnNameLower}" column="${column.sqlName}"/>
+		</#list>
+	</resultMap>
+	
+	<sql id="${className}Columns">
+	    <![CDATA[
+		<#list table.columns as column>
+		    `${column.sqlName}`<#if column_has_next>,</#if>
+		</#list>
+	    ]]>
+	</sql>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="${table.idColumn.columnNameFirstLower}">
+    <![CDATA[
+        INSERT INTO ${table.sqlName} (
+        <#list table.columns as column>
+        	`${column.sqlName}` <#if column_has_next>,</#if>
+        </#list>
+        ) VALUES (
+        <#list table.columns as column>
+          <#if column.sqlName=='ctime' >
+            now()<#if column_has_next>,</#if>
+            <#elseif column.sqlName!='lmd' >
+            <@mapperEl column.columnNameFirstLower/> <#if column_has_next>,</#if>
+          </#if>
+        </#list>
+        )
+    ]]>
+	</insert>
+    
+	<update id="update" >
+        UPDATE ${table.sqlName}
+        <set>
+        <#list table.notPkColumns as column>
+        <if test="${column.columnNameFirstLower} != null">
+            `${column.sqlName}` = <@mapperEl column.columnNameFirstLower/> <#if column_has_next>,</#if>
+        </if>
+        </#list>
+        </set>
+        WHERE
+        	<#list table.compositeIdColumns as column>
+	        `${column.sqlName}` = <@mapperEl column.columnNameLower/> <#if column_has_next> AND</#if>
+	        </#list>	        
+	</update>
+
+    <delete id="deleteByPk">
+    <![CDATA[
+        DELETE FROM ${table.sqlName} WHERE
+        <#list table.compositeIdColumns as column>
+        `${column.sqlName}` = <@mapperEl column.columnNameLower/> <#if column_has_next> AND</#if>
+		</#list>
+    ]]>
+    </delete>
+    
+    <select id="getByPk" resultMap="${className}">
+		SELECT <include refid="${className}Columns" />
+	    <![CDATA[
+		    FROM ${table.sqlName} 
+	        WHERE 
+				<#list table.compositeIdColumns as column>
+		        `${column.sqlName}` = <@mapperEl column.columnNameLower/> <#if column_has_next> AND</#if>
+		        </#list>    
+	    ]]>
+	</select>
+	
+	<sql id="findPageWhere">
+		<where>
+	       <#list table.columns as column>
+	       <#if column.isDateTimeColumn>
+	       <if test="params.containsKey('${column.columnNameFirstLower}Begin')">
+				AND `${column.sqlName}` >= <@mapperEl 'params.${column.columnNameFirstLower}Begin'/>
+		   </if>
+		   <if test="params.containsKey('${column.columnNameFirstLower}End')">
+				AND `${column.sqlName}` &lt;= <@mapperEl 'params.${column.columnNameFirstLower}End'/>
+		   </if>
+	       <#else>
+	       <if test="params.containsKey('${column.columnNameFirstLower}')">
+				AND `${column.sqlName}` = <@mapperEl 'params.${column.columnNameFirstLower}'/>
+			</if>
+	       </#if>
+	       </#list>			
+		</where>
+	</sql>
+		
+    <select id="findPageCount" resultType="int">
+        SELECT count(*) FROM ${table.sqlName} 
+		<include refid="findPageWhere"/>
+    </select>
+    
+    <select id="findPage" resultMap="${className}">
+    	SELECT <include refid="${className}Columns" />
+	    FROM ${table.sqlName} 
+		<include refid="findPageWhere"/>
+		
+		<if test="orderBy != null">
+			ORDER BY <@jspEl 'orderBy'/>
+		</if>
+        LIMIT <@mapperEl 'pageModel.start'/>, <@mapperEl 'pageModel.pageSize'/>
+    </select>
+
+    <#list table.columns as column>
+    <#if column.unique && !column.pk>
+    <select id="getBy${column.columnName}" resultMap="${className}" parameterType="${column.javaType}">
+	    SELECT <include refid="${className}Columns"/>
+	    <![CDATA[
+	        FROM ${table.sqlName} WHERE `${column.sqlName}` = <@mapperEl column.columnNameLower/>
+	    ]]>
+    </select>
+    
+    </#if>
+	</#list>
+	
+</mapper>
+

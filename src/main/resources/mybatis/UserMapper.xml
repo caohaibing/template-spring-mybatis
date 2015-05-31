@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.quxionglie.tsm.mapper.UserMapper">
+
+	<resultMap id="User" type="com.quxionglie.tsm.model.User">
+        <result property="uid" column="uid"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="ctime" column="ctime"/>
+        <result property="lmd" column="lmd"/>
+	</resultMap>
+
+	<sql id="UserColumns">
+	    <![CDATA[
+		    `uid`,
+		    `username`,
+		    `password`,
+		    `ctime`,
+		    `lmd`
+	    ]]>
+	</sql>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="uid">
+    <![CDATA[
+        INSERT INTO user (
+        	`uid` ,
+        	`username` ,
+        	`password`
+        ) VALUES (
+            #{uid} ,
+            #{username} ,
+            #{password}
+        )
+    ]]>
+	</insert>
+    
+	<update id="update" >
+        UPDATE user
+        <set>
+        <if test="username != null">
+            `username` = #{username} ,
+        </if>
+        <if test="password != null">
+            `password` = #{password} ,
+        </if>
+        <if test="ctime != null">
+            `ctime` = #{ctime} ,
+        </if>
+        <if test="lmd != null">
+            `lmd` = #{lmd} 
+        </if>
+        </set>
+        WHERE
+	        `uid` = #{uid} 
+	</update>
+
+    <delete id="deleteByPk">
+    <![CDATA[
+        DELETE FROM user WHERE
+        `uid` = #{uid} 
+    ]]>
+    </delete>
+    
+    <select id="getByPk" resultMap="User">
+		SELECT <include refid="UserColumns" />
+	    <![CDATA[
+		    FROM user 
+	        WHERE 
+		        `uid` = #{uid}
+	    ]]>
+	</select>
+	
+	<sql id="findPageWhere">
+		<where>
+	       <if test="params.containsKey('uid')">
+				AND `uid` = #{params.uid}
+			</if>
+	       <if test="params.containsKey('username')">
+				AND `username` = #{params.username}
+			</if>
+	       <if test="params.containsKey('password')">
+				AND `password` = #{params.password}
+			</if>
+	       <if test="params.containsKey('ctimeBegin')">
+				AND `ctime` >= #{params.ctimeBegin}
+		   </if>
+		   <if test="params.containsKey('ctimeEnd')">
+				AND `ctime` &lt;= #{params.ctimeEnd}
+		   </if>
+	       <if test="params.containsKey('lmdBegin')">
+				AND `lmd` >= #{params.lmdBegin}
+		   </if>
+		   <if test="params.containsKey('lmdEnd')">
+				AND `lmd` &lt;= #{params.lmdEnd}
+		   </if>
+		</where>
+	</sql>
+		
+    <select id="findPageCount" resultType="int">
+        SELECT count(*) FROM user 
+		<include refid="findPageWhere"/>
+    </select>
+    
+    <select id="findPage" resultMap="User">
+    	SELECT <include refid="UserColumns" />
+	    FROM user 
+		<include refid="findPageWhere"/>
+		
+		<if test="orderBy != null">
+			ORDER BY ${orderBy}
+		</if>
+        LIMIT #{pageModel.start}, #{pageModel.pageSize}
+    </select>
+
+    <select id="getByUsername" resultMap="User" parameterType="java.lang.String">
+	    SELECT <include refid="UserColumns"/>
+	    <![CDATA[
+	        FROM user WHERE `username` = #{username}
+	    ]]>
+    </select>
+    
+	
+</mapper>
+

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.quxionglie.tsm.mapper.SysDictMapper">
+
+	<resultMap id="SysDict" type="com.quxionglie.tsm.model.SysDict">
+        <result property="id" column="id"/>
+        <result property="dictType" column="dict_type"/>
+        <result property="dictKey" column="dict_key"/>
+        <result property="dictValue" column="dict_value"/>
+        <result property="sortSeq" column="sort_seq"/>
+        <result property="remark" column="remark"/>
+	</resultMap>
+	
+	<sql id="SysDictColumns">
+	    <![CDATA[
+		    `id`,
+		    `dict_type`,
+		    `dict_key`,
+		    `dict_value`,
+		    `sort_seq`,
+		    `remark`
+	    ]]>
+	</sql>
+
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    <![CDATA[
+        INSERT INTO sys_dict (
+        	`id` ,
+        	`dict_type` ,
+        	`dict_key` ,
+        	`dict_value` ,
+        	`sort_seq` ,
+        	`remark` 
+        ) VALUES (
+            #{id} ,
+            #{dictType} ,
+            #{dictKey} ,
+            #{dictValue} ,
+            #{sortSeq} ,
+            #{remark} 
+        )
+    ]]>
+	</insert>
+    
+	<update id="update" >
+        UPDATE sys_dict
+        <set>
+        <if test="dictType != null">
+            `dict_type` = #{dictType} ,
+        </if>
+        <if test="dictKey != null">
+            `dict_key` = #{dictKey} ,
+        </if>
+        <if test="dictValue != null">
+            `dict_value` = #{dictValue} ,
+        </if>
+        <if test="sortSeq != null">
+            `sort_seq` = #{sortSeq} ,
+        </if>
+        <if test="remark != null">
+            `remark` = #{remark} 
+        </if>
+        </set>
+        WHERE
+	        `id` = #{id} 
+	</update>
+
+    <delete id="deleteByPk">
+    <![CDATA[
+        DELETE FROM sys_dict WHERE
+        `id` = #{id} 
+    ]]>
+    </delete>
+    
+    <select id="getByPk" resultMap="SysDict">
+		SELECT <include refid="SysDictColumns" />
+	    <![CDATA[
+		    FROM sys_dict 
+	        WHERE 
+		        `id` = #{id} 
+	    ]]>
+	</select>
+	
+	<sql id="findPageWhere">
+		<where>
+	       <if test="params.containsKey('id')">
+				AND `id` = #{params.id}
+			</if>
+	       <if test="params.containsKey('dictType')">
+				AND `dict_type` = #{params.dictType}
+			</if>
+	       <if test="params.containsKey('dictKey')">
+				AND `dict_key` = #{params.dictKey}
+			</if>
+	       <if test="params.containsKey('dictValue')">
+				AND `dict_value` = #{params.dictValue}
+			</if>
+	       <if test="params.containsKey('sortSeq')">
+				AND `sort_seq` = #{params.sortSeq}
+			</if>
+	       <if test="params.containsKey('remark')">
+				AND `remark` = #{params.remark}
+			</if>
+		</where>
+	</sql>
+		
+    <select id="findPageCount" resultType="int">
+        SELECT count(*) FROM sys_dict 
+		<include refid="findPageWhere"/>
+    </select>
+    
+    <select id="findPage" resultMap="SysDict">
+    	SELECT <include refid="SysDictColumns" />
+	    FROM sys_dict 
+		<include refid="findPageWhere"/>
+		
+		<if test="orderBy != null">
+			ORDER BY ${orderBy}
+		</if>
+        LIMIT #{pageModel.start}, #{pageModel.pageSize}
+    </select>
+
+	
+</mapper>
+
